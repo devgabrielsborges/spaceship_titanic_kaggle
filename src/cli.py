@@ -36,11 +36,13 @@ def _register_models():
         SVMAdapter,
     )
 
-    MODEL_REGISTRY["linear"] = lambda _task: LinearRegressionAdapter()
-    MODEL_REGISTRY["ridge"] = lambda _task: RidgeAdapter()
-    MODEL_REGISTRY["random_forest"] = lambda _task: RandomForestAdapter()
-    MODEL_REGISTRY["gradient_boosting"] = lambda _task: GradientBoostingAdapter()
-    MODEL_REGISTRY["svm"] = lambda _task: SVMAdapter()
+    MODEL_REGISTRY["linear"] = lambda task: LinearRegressionAdapter(task_type=task)
+    MODEL_REGISTRY["ridge"] = lambda task: RidgeAdapter(task_type=task)
+    MODEL_REGISTRY["random_forest"] = lambda task: RandomForestAdapter(task_type=task)
+    MODEL_REGISTRY["gradient_boosting"] = lambda task: GradientBoostingAdapter(
+        task_type=task
+    )
+    MODEL_REGISTRY["svm"] = lambda task: SVMAdapter(task_type=task)
 
     # XGBoost
     try:
@@ -113,6 +115,11 @@ def parse_args() -> argparse.Namespace:
         "--generate-submission",
         action="store_true",
         help="Generate submission file after training",
+    )
+    parser.add_argument(
+        "--preprocess",
+        action="store_true",
+        help="Preprocess raw data and save to processed directory",
     )
     return parser.parse_args()
 
@@ -258,10 +265,82 @@ def train_all_models(
     return results
 
 
+def preprocess_data(settings: Settings) -> None:
+    """Preprocess raw data and save to processed directory."""
+    import os
+
+    import pandas as pd
+
+    from src.infrastructure.adapters.preprocessors.sklearn_preprocessor import (
+        SklearnPreprocessor,
+    )
+
+    print("\n" + "=" * 60)
+    print("  DATA PREPROCESSING")
+    print("=" * 60)
+
+    # Load raw data
+    train_path = os.path.join(settings.raw_data_dir, "train.csv")
+    if not os.path.exists(train_path):
+        print(f"✗ Error: Training data not found at {train_path}")
+        return
+
+    print(f"\nLoading raw data from {train_path}...")
+    train_df = pd.read_csv(train_path)
+    print(f"✓ Loaded training data: {train_df.shape}")
+
+    # Determine target column (adjust for your competition)
+    target_col = "Transported"  # Default for Spaceship Titanic
+    if target_col not in train_df.columns:
+        print(f"✗ Error: Target column '{target_col}' not found in data")
+        print(f"  Available columns: {', '.join(train_df.columns)}")
+        return
+
+    # Apply preprocessing and split
+    preprocessor = SklearnPreprocessor()
+    print("\nApplying preprocessing pipeline...")
+    dataset = preprocessor.get_train_test_split(
+        data=train_df,
+        target_col=target_col,
+        test_size=0.2,
+        random_state=settings.random_state,
+    )
+
+    # Create processed directory if it doesn't exist
+    os.makedirs(settings.processed_data_dir, exist_ok=True)
+
+    # Save processed data
+    output_dir = settings.processed_data_dir
+    print(f"\nSaving processed data to {output_dir}...")
+
+    dataset.X_train.to_parquet(os.path.join(output_dir, "X_train.parquet"))
+    dataset.X_test.to_parquet(os.path.join(output_dir, "X_test.parquet"))
+    pd.DataFrame(dataset.y_train).to_parquet(
+        os.path.join(output_dir, "y_train.parquet")
+    )
+    pd.DataFrame(dataset.y_test).to_parquet(os.path.join(output_dir, "y_test.parquet"))
+
+    print("\n✓ Preprocessing completed successfully:")
+    print(f"  - X_train: {dataset.X_train.shape}")
+    print(f"  - X_test: {dataset.X_test.shape}")
+    print(f"  - y_train: {dataset.y_train.shape}")
+    print(f"  - y_test: {dataset.y_test.shape}")
+    print(f"\n  Features ({len(dataset.X_train.columns)}):")
+    for col in sorted(dataset.X_train.columns):
+        print(f"    - {col}")
+
+
 def main():
     args = parse_args()
 
     _register_models()
+
+    settings = Settings()
+
+    # Handle preprocessing command
+    if args.preprocess:
+        preprocess_data(settings)
+        return
 
     # Determine if training all models
     if args.train_all or (args.model and args.model.lower() == "all"):
@@ -281,7 +360,6 @@ def main():
         print("  Use --train-all to train all available models")
         return
 
-    settings = Settings()
     task_type = TaskType(args.task)
 
     # Load data

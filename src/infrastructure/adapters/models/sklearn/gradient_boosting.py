@@ -4,23 +4,34 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 
+from src.domain.entities.experiment_config import TaskType
 from src.domain.ports.model_port import ModelPort
 
 
 class GradientBoostingAdapter(ModelPort):
     """Adapter for sklearn Gradient Boosting."""
 
-    def __init__(self):
-        self._model: GradientBoostingRegressor | None = None
+    def __init__(self, task_type: TaskType = TaskType.REGRESSION):
+        self._model: GradientBoostingRegressor | GradientBoostingClassifier | None = (
+            None
+        )
+        self._task_type = task_type
+        self._is_classifier = task_type in (
+            TaskType.BINARY_CLASSIFICATION,
+            TaskType.MULTICLASS_CLASSIFICATION,
+        )
 
     @property
     def name(self) -> str:
         return "GradientBoosting"
 
     def build(self, hyperparameters: dict) -> None:
-        self._model = GradientBoostingRegressor(**hyperparameters)
+        if self._is_classifier:
+            self._model = GradientBoostingClassifier(**hyperparameters)
+        else:
+            self._model = GradientBoostingRegressor(**hyperparameters)
 
     def fit(
         self,
@@ -51,7 +62,7 @@ class GradientBoostingAdapter(ModelPort):
             "random_state": 42,
         }
 
-    def get_model(self) -> GradientBoostingRegressor:
+    def get_model(self) -> GradientBoostingRegressor | GradientBoostingClassifier:
         return self._model
 
     def get_default_trials(self) -> int:

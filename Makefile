@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs clean ui install train dvc-push dvc-pull dvc-status
+.PHONY: help start stop restart logs clean ui install train preprocess dvc-push dvc-pull dvc-status
 
 help:
 	@echo "Available commands:"
@@ -22,6 +22,7 @@ help:
 	@echo "    make train-all TASK=regression  # Trains all models, generates all submissions"
 	@echo ""
 	@echo "  Data:"
+	@echo "    make preprocess - Preprocess raw data and save to processed/"
 	@echo "    make dvc-push   - Push data to MinIO remote storage"
 	@echo "    make dvc-pull   - Pull data from MinIO remote storage"
 	@echo "    make dvc-status - Check DVC status"
@@ -84,7 +85,7 @@ ui:
 # -- Training --
 
 MODEL ?= xgboost
-TASK ?= regression
+TASK ?= binary_classification
 TRIALS ?= auto
 CV_FOLDS ?= 5
 SUBMIT ?= false
@@ -111,6 +112,13 @@ train-all:
 	--cv-folds $(CV_FOLDS)
 
 # -- Data --
+
+preprocess:
+	@echo "Preprocessing data..."
+	AWS_ACCESS_KEY_ID=minioadmin \
+	AWS_SECRET_ACCESS_KEY=minioadmin \
+	MLFLOW_S3_ENDPOINT_URL=http://localhost:9000 \
+	uv run python -m src.cli --preprocess
 
 dvc-push:
 	@echo "Pushing data to MinIO remote storage..."

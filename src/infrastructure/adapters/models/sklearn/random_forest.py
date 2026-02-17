@@ -4,23 +4,32 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
+from src.domain.entities.experiment_config import TaskType
 from src.domain.ports.model_port import ModelPort
 
 
 class RandomForestAdapter(ModelPort):
     """Adapter for sklearn Random Forest."""
 
-    def __init__(self):
-        self._model: RandomForestRegressor | None = None
+    def __init__(self, task_type: TaskType = TaskType.REGRESSION):
+        self._model: RandomForestRegressor | RandomForestClassifier | None = None
+        self._task_type = task_type
+        self._is_classifier = task_type in (
+            TaskType.BINARY_CLASSIFICATION,
+            TaskType.MULTICLASS_CLASSIFICATION,
+        )
 
     @property
     def name(self) -> str:
         return "RandomForest"
 
     def build(self, hyperparameters: dict) -> None:
-        self._model = RandomForestRegressor(**hyperparameters)
+        if self._is_classifier:
+            self._model = RandomForestClassifier(**hyperparameters)
+        else:
+            self._model = RandomForestRegressor(**hyperparameters)
 
     def fit(
         self,
@@ -44,7 +53,7 @@ class RandomForestAdapter(ModelPort):
             "random_state": 42,
         }
 
-    def get_model(self) -> RandomForestRegressor:
+    def get_model(self) -> RandomForestRegressor | RandomForestClassifier:
         return self._model
 
     def get_default_trials(self) -> int:

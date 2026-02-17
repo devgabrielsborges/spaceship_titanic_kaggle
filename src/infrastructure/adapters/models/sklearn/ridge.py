@@ -4,23 +4,32 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeClassifier
 
+from src.domain.entities.experiment_config import TaskType
 from src.domain.ports.model_port import ModelPort
 
 
 class RidgeAdapter(ModelPort):
     """Adapter for sklearn Ridge Regression."""
 
-    def __init__(self):
-        self._model: Ridge | None = None
+    def __init__(self, task_type: TaskType = TaskType.REGRESSION):
+        self._model: Ridge | RidgeClassifier | None = None
+        self._task_type = task_type
+        self._is_classifier = task_type in (
+            TaskType.BINARY_CLASSIFICATION,
+            TaskType.MULTICLASS_CLASSIFICATION,
+        )
 
     @property
     def name(self) -> str:
-        return "RidgeRegression"
+        return "RidgeClassifier" if self._is_classifier else "RidgeRegression"
 
     def build(self, hyperparameters: dict) -> None:
-        self._model = Ridge(**hyperparameters)
+        if self._is_classifier:
+            self._model = RidgeClassifier(**hyperparameters)
+        else:
+            self._model = Ridge(**hyperparameters)
 
     def fit(
         self,
@@ -41,7 +50,7 @@ class RidgeAdapter(ModelPort):
             "max_iter": trial.suggest_int("max_iter", 100, 5000),
         }
 
-    def get_model(self) -> Ridge:
+    def get_model(self) -> Ridge | RidgeClassifier:
         return self._model
 
     def get_default_trials(self) -> int:

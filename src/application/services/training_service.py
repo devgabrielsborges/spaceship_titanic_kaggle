@@ -87,13 +87,22 @@ class TrainingService:
             # Generate submission if requested
             if generate_submission and test_df is not None and train_df is not None:
                 self._generate_and_log_submission(
-                    test_df, train_df, settings, submission_filename
+                    test_df,
+                    train_df,
+                    settings,
+                    submission_filename,
+                    expected_features=list(dataset.X_train.columns),
                 )
 
             return self.model_adapter, study, metrics
 
     def _generate_and_log_submission(
-        self, test_df, train_df, settings, submission_filename: str = "submission.csv"
+        self,
+        test_df,
+        train_df,
+        settings,
+        submission_filename: str = "submission.csv",
+        expected_features: list[str] | None = None,
     ) -> None:
         """Generate submission file and log it as an artifact."""
         from src.application.services.submission_service import SubmissionService
@@ -122,6 +131,7 @@ class TrainingService:
             test_df=test_df,
             train_df=train_df,
             output_path=submission_filename,
+            expected_features=expected_features,
         )
 
         # Log to MLflow (will be stored in MinIO)

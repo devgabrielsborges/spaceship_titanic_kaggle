@@ -71,16 +71,16 @@ class Settings:
     competition_name: str = field(
         default_factory=lambda: os.getenv(
             "COMPETITION_NAME",
-            "kaggle-competition",
+            "spaceship-titanic",
         )
     )
     target_col: str = field(
         default_factory=lambda: os.getenv(
             "TARGET_COL",
-            "target",
+            "Transported",
         )
     )
-    id_col: str = field(default_factory=lambda: os.getenv("ID_COL", "id"))
+    id_col: str = field(default_factory=lambda: os.getenv("ID_COL", "PassengerId"))
     test_size: float = 0.2
     random_state: int = 42
 
