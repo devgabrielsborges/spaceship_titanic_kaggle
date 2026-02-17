@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.svm import SVR, SVC
+from sklearn.svm import SVC, SVR
 
 from src.domain.entities.experiment_config import TaskType
 from src.domain.ports.model_port import ModelPort

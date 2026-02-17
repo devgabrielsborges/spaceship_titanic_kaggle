@@ -105,10 +105,10 @@ class TrainingService:
         expected_features: list[str] | None = None,
     ) -> None:
         """Generate submission file and log it as an artifact."""
-        from src.application.services.submission_service import SubmissionService
-        from src.infrastructure.adapters.preprocessors.sklearn_preprocessor import (
-            SklearnPreprocessor,
-        )
+        from src.application.services.submission_service import \
+            SubmissionService
+        from src.infrastructure.adapters.preprocessors.sklearn_preprocessor import \
+            SklearnPreprocessor
 
         print("\n" + "=" * 60)
         print("  GENERATING SUBMISSION FILE")

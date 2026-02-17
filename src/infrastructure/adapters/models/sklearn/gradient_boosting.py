@@ -4,7 +4,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
+from sklearn.ensemble import (GradientBoostingClassifier,
+                              GradientBoostingRegressor)
 
 from src.domain.entities.experiment_config import TaskType
 from src.domain.ports.model_port import ModelPort

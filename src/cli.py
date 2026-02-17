@@ -29,12 +29,8 @@ def _register_models():
 
     # sklearn models (always available)
     from src.infrastructure.adapters.models.sklearn import (
-        GradientBoostingAdapter,
-        LinearRegressionAdapter,
-        RandomForestAdapter,
-        RidgeAdapter,
-        SVMAdapter,
-    )
+        GradientBoostingAdapter, LinearRegressionAdapter, RandomForestAdapter,
+        RidgeAdapter, SVMAdapter)
 
     MODEL_REGISTRY["linear"] = lambda task: LinearRegressionAdapter(task_type=task)
     MODEL_REGISTRY["ridge"] = lambda task: RidgeAdapter(task_type=task)
@@ -62,7 +58,8 @@ def _register_models():
 
     # TensorFlow
     try:
-        from src.infrastructure.adapters.models.tensorflow import TensorFlowAdapter
+        from src.infrastructure.adapters.models.tensorflow import \
+            TensorFlowAdapter
 
         MODEL_REGISTRY["tensorflow"] = lambda task: TensorFlowAdapter(
             task_type=task,
@@ -271,9 +268,8 @@ def preprocess_data(settings: Settings) -> None:
 
     import pandas as pd
 
-    from src.infrastructure.adapters.preprocessors.sklearn_preprocessor import (
-        SklearnPreprocessor,
-    )
+    from src.infrastructure.adapters.preprocessors.sklearn_preprocessor import \
+        SklearnPreprocessor
 
     print("\n" + "=" * 60)
     print("  DATA PREPROCESSING")
